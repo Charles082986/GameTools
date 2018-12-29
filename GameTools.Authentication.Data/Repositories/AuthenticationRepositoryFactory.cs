@@ -9,7 +9,8 @@ namespace GameTools.Authentication.Data.Repositories
     {
         public IAuthenticationRepository CreateRepository(string connectionString)
         {
-            return new AuthenticationRepository(connectionString);
+            Security security = new Security(1000, 256);
+            return new AuthenticationRepository(connectionString, security);
         }
     }
 }

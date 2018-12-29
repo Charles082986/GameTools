@@ -13,15 +13,25 @@ namespace GameTools.Authentication.Data.Repositories
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Role>().HasKey("Id");
-            modelBuilder.Entity<Role>().HasIndex("Name").IsUnique();
+            modelBuilder.Entity<Claim>().HasKey(c => c.Id);
+            modelBuilder.Entity<Claim>().HasIndex("Name", "Provider").IsUnique();
+            modelBuilder.Entity<Claim>().HasOne(c => c.User).WithMany(u => u.Claims);
 
-            modelBuilder.Entity<User>().HasKey("Id");
-            modelBuilder.Entity<User>().HasIndex("EmailAddress").IsUnique();
-            modelBuilder.Entity<User>().HasMany("Role");
+            modelBuilder.Entity<User>().HasKey(u => u.Id);
+            modelBuilder.Entity<User>().HasIndex(u => u.EmailAddress).IsUnique();
+
+            modelBuilder.Entity<ThirdPartyAuthenticationToken>().HasKey(tpat => tpat.Id);
+            modelBuilder.Entity<ThirdPartyAuthenticationToken>()
+                .HasOne(tpat => tpat.User)
+                .WithMany(u => u.ThirdPartyAuthenticationTokens);
+            modelBuilder.Entity<ThirdPartyAuthenticationToken>().HasIndex(tpat => tpat.Token).IsUnique();
+
+            modelBuilder.Entity<ThirdPartyValidationKey>().HasKey("Provider", "Name");
         }
 
-        public DbSet<Role> Roles { get; set; }
+        public DbSet<Claim> Claims { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<ThirdPartyAuthenticationToken> ThirdPartyAuthenticationTokens { get; set; }
+        public DbSet<ThirdPartyValidationKey> ThirdPartyValidationKeys { get; set; }
     }
 }
