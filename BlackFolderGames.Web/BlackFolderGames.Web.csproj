@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <UserSecretsId>aspnet-BlackFolderGames.Web-C1AFEC24-6155-4D4D-A246-0E368EA5C026</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="2.2.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Archon\Controllers\" />
+    <Folder Include="Areas\Archon\Data\" />
+    <Folder Include="Areas\Archon\Models\" />
+    <Folder Include="Areas\Archon\Views\" />
+    <Folder Include="Areas\HeroesUnlimited\Controllers\" />
+    <Folder Include="Areas\HeroesUnlimited\Data\" />
+    <Folder Include="Areas\HeroesUnlimited\Models\" />
+    <Folder Include="Areas\HeroesUnlimited\Views\" />
+    <Folder Include="Areas\Identity\Services\" />
+    <Folder Include="Areas\PentadSystem\Controllers\" />
+    <Folder Include="Areas\PentadSystem\Data\" />
+    <Folder Include="Areas\PentadSystem\Models\" />
+    <Folder Include="Areas\PentadSystem\Views\" />
+    <Folder Include="Areas\WorldBuilder\Data\" />
+    <Folder Include="Areas\WorldBuilder\Models\" />
+    <Folder Include="Areas\WorldBuilder\Views\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorldBuilder.Data\WorldBuilder.Data.csproj" />
+  </ItemGroup>
+
+</Project>

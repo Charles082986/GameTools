@@ -1,0 +1,67 @@
+﻿@using Microsoft.AspNetCore.Authorization;
+@inject IAuthorizationService Authorization
+@model List<UserModel>
+@{
+    ViewData["Title"] = "Index";
+    var canEditClaims = await Authorization.AuthorizeAsync(User, "CanEditClaims");
+    var canSuspendUsers = await Authorization.AuthorizeAsync(User, "CanSuspendUsers");
+    var canBanUsers = await Authorization.AuthorizeAsync(User, "CanBanUsers");
+}
+
+<h2>Users</h2>
+
+<table class="table">
+    @{ var headerModel = new UserModel().IdentityUser; }
+    <tr>
+        <th>
+            @Html.DisplayNameFor(m => headerModel.UserName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(m => headerModel.Email)
+        </th>
+        <th>
+            @Html.DisplayNameFor(m => headerModel.EmailConfirmed)
+        </th>
+        <th>
+            Status
+        </th>
+        <th>
+
+        </th>
+    </tr>
+    @foreach (UserModel user in Model)
+    {
+        var status = "ACTIVE";
+        DateTime datestamp = DateTime.MinValue;
+        if (user.Claims.FirstOrDefault(c => c.Type == "BANNED" && c.Issuer == "LOCAL AUTHORITY") != null)
+        {
+            status = "BANNED";
+        }
+        else if (user.Claims.FirstOrDefault(c => c.Type == "SUSPENDED" && c.Issuer == "LOCAL AUTHORITY") != null
+            && user.Claims.FirstOrDefault(c => c.Type == "SUSPENSION_END" && c.Issuer == "LOCAL AUTHORITY" && DateTime.TryParse(c.Value, out datestamp) && DateTime.Now < datestamp) != null)
+        {
+            status = "SUSPENDED UNTIL " + datestamp.ToString("YYYY-MM-DD");
+        }
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => user.IdentityUser.UserName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => user.IdentityUser.Email)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => user.IdentityUser.EmailConfirmed)
+        </td>
+        <td>
+            @status
+        </td>
+        <td>
+            @if (canEditClaims.Succeeded) { @Html.ActionLink("Edit Claims", "EditClaims", new { UserId = user.IdentityUser.Id }); }
+        </td>
+    </tr>
+    }
+</table>
+
+
+
+

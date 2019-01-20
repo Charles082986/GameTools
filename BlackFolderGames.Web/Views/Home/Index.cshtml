@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@if (User != null && User.Claims.Any())
+{
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    Type
+                </th>
+                <th>
+                    Value
+                </th>
+                <th>
+                    Issuer
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in User.Claims)
+            {
+            <tr>
+                <td>@c.Type</td>
+                <td>@c.Value</td>
+                <td>@c.Issuer</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}

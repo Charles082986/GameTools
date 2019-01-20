@@ -1,0 +1,41 @@
+﻿@using System.Security.Claims;
+@model UserModel
+@{
+    ViewData["Title"] = "EditClaims";
+}
+
+<h2>Edit Claims for @Model.IdentityUser.UserName (@Model.IdentityUser.Email)</h2>
+
+@if(Model.Claims == null || !Model.Claims.Any())
+{
+    Model.Claims = new List<Claim>() { new Claim("","",ClaimValueTypes.String,"BFG") };
+}
+else
+{
+    Model.Claims.Add(new Claim("", "", ClaimValueTypes.String, "BFG"));
+}
+@using (Html.BeginForm())
+{
+    Html.AntiForgeryToken();
+    <div class="form-horizontal">
+        @Html.ValidationSummary(true,"", new { @class = "text-danger" })
+        <div class="form-group">
+            @Html.LabelFor(model => model.Claims[0], htmlAttributes: new { @class = "control-label col-md-2 claims-label"})
+            @for (int i = 0; i < Model.Claims.Count; i++)
+            {
+            <div class="col-md-10 claims-unit">
+                @Html.EditorFor(model => model.Claims[i].Type, new { htmlAttributes = new { @class = "form-control col-md-3 claim-type" }})
+                @Html.EditorFor(model => model.Claims[i].Value, new { htmlAttributes = new { @class = "form-control col-md-3 claim-value"}})
+                @Html.EditorFor(model => model.Claims[i].Issuer, new { htmlAttributes = new { @class = "form-control col-md-3 claim-issuer"}})
+                @Html.HiddenFor(model => model.Claims[i].OriginalIssuer)
+                @Html.HiddenFor(model => model.Claims[i].Subject)
+                @Html.HiddenFor(model => model.Claims[i].Properties)
+                @Html.HiddenFor(modle => Model.Claims[i].ValueType)
+            </div>
+            }
+        </div>
+    </div>
+}
+
+
+

@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2015
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackFolderGames.Web", "BlackFolderGames.Web\BlackFolderGames.Web.csproj", "{3BB622E5-B00A-4DBE-9FA3-1689E74E1B88}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PentadSystem.Application", "PentadSystem.Application\PentadSystem.Application.csproj", "{947B81D6-E53A-4BB5-A939-4920FAD25255}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackFolderGames.Application", "BlackFolderGames.Application\BlackFolderGames.Application.csproj", "{1562C40E-CF87-4603-97F4-564A7359A94F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackFolderGames.Data", "BlackFolderGames.Data\BlackFolderGames.Data.csproj", "{BE8E61EC-CC2B-4717-95DB-AF790E00BF3C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PentadSystem.Data", "PentadSystem.Data\PentadSystem.Data.csproj", "{EA15EEAE-E5D2-48B9-8DE4-11A9FBFB82E0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorldBuilder.Data", "WorldBuilder.Data\WorldBuilder.Data.csproj", "{5480998B-1BDE-4A9B-A553-283A640732CB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3BB622E5-B00A-4DBE-9FA3-1689E74E1B88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BB622E5-B00A-4DBE-9FA3-1689E74E1B88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BB622E5-B00A-4DBE-9FA3-1689E74E1B88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BB622E5-B00A-4DBE-9FA3-1689E74E1B88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{947B81D6-E53A-4BB5-A939-4920FAD25255}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{947B81D6-E53A-4BB5-A939-4920FAD25255}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{947B81D6-E53A-4BB5-A939-4920FAD25255}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{947B81D6-E53A-4BB5-A939-4920FAD25255}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1562C40E-CF87-4603-97F4-564A7359A94F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1562C40E-CF87-4603-97F4-564A7359A94F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1562C40E-CF87-4603-97F4-564A7359A94F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1562C40E-CF87-4603-97F4-564A7359A94F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE8E61EC-CC2B-4717-95DB-AF790E00BF3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE8E61EC-CC2B-4717-95DB-AF790E00BF3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE8E61EC-CC2B-4717-95DB-AF790E00BF3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE8E61EC-CC2B-4717-95DB-AF790E00BF3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA15EEAE-E5D2-48B9-8DE4-11A9FBFB82E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA15EEAE-E5D2-48B9-8DE4-11A9FBFB82E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA15EEAE-E5D2-48B9-8DE4-11A9FBFB82E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA15EEAE-E5D2-48B9-8DE4-11A9FBFB82E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5480998B-1BDE-4A9B-A553-283A640732CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5480998B-1BDE-4A9B-A553-283A640732CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5480998B-1BDE-4A9B-A553-283A640732CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5480998B-1BDE-4A9B-A553-283A640732CB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {897AFD80-37BB-41B6-9C6B-B84B6949E253}
+	EndGlobalSection
+EndGlobal
