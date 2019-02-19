@@ -7,13 +7,14 @@ namespace WorldBuilder.Data
 {
     public class PointOfInterest
     {
-        public Guid PointOfInterestId { get; set; }
-        public Guid RegionSetId { get; set; }
+        public string PointOfInterestId { get; set; }
+        public string RegionSetId { get; set; }
         [JsonIgnore]
         public List<Region> Regions { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
         public string Description { get; set; }
+        public string ImageURL { get; set; }
     }
 
     public class PointOfInterestComparer : IEqualityComparer<PointOfInterest>

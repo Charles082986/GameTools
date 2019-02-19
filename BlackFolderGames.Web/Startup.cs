@@ -13,6 +13,8 @@ using BlackFolderGames.Web.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WorldBuilder.Data;
+using BlackFolderGames.Application;
+using Neo4jClient;
 
 namespace BlackFolderGames.Web
 {
@@ -86,9 +88,21 @@ namespace BlackFolderGames.Web
                         context.User.HasClaim(c =>
                             c.Issuer == "LOCAL AUTHORITY" &&
                             c.Type == "CanBanUsers")));
+
+                
             });
 
+            services.AddSingleton<NeoServerConfiguration>(
+                context => NeoServerConfiguration.GetConfiguration(
+                    new Uri(Configuration["BlackFolderGames:WorldBuilder:Uri"])
+                    , Configuration["BlackFolderGames:WorldBuilder:User"]
+                    , Configuration["BlackFolderGames:WorldBuilder:Password"]));
+            services.AddSingleton<IGraphClientFactory, GraphClientFactory>();
+
             services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IWorldBuilderRepository, WorldBuilderRepository>();
+            services.AddTransient<IWorldService, WorldService>();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -104,10 +118,13 @@ namespace BlackFolderGames.Web
 
             app.UseMvc(routes =>
             {
+                routes.MapRoute(name: "areaRoute",
+                  template: "{area}/{controller=Home}/{action=Index}/{id?}");
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

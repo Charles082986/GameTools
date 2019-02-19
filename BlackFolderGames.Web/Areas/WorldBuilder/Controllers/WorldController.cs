@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using BlackFolderGames.Application;
+using BlackFolderGames.Web.Areas.WorldBuilder.Models;
+using BlackFolderGames.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorldBuilder.Data;
@@ -10,15 +13,98 @@ using WorldBuilder.Data;
 namespace BlackFolderGames.Web.Areas.WorldBuilder.Controllers
 {
     [Authorize]
+    [Area("WorldBuilder")]
     public class WorldController : Controller
     {
-        public WorldController()
+        private IWorldService _worldService;
+        private IUserRepository _userRepository;
+
+        public WorldController(IWorldService worldService, IUserRepository userRepository)
         {
+            _userRepository = userRepository;
+            _worldService = worldService;
         }
 
         public IActionResult Index()
         {
             return View();
+        }
+
+        public IActionResult Create()
+        {
+            RegionSet model = new RegionSet() { OwnerId = User.GetUserId() };
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create([Bind("RegionSetId,Name,OwnerId,ImageURL,Description,IsPublic")]RegionSet model)
+        {
+            if(ModelState.IsValid)
+            {
+                model.OwnerId = User.GetUserId();
+                var regionSet = _worldService.CreateRegionSet(model);
+                return RedirectToAction("RegionSet",new { regionSetId =  regionSet.RegionSetId });
+            }
+            return View(model);
+        }
+
+        public IActionResult RegionSet(string regionSetId)
+        {
+            var userId = User.GetUserId();
+            if (_worldService.CanViewRegionSet(userId,regionSetId))
+            {
+                RegionSet model = _worldService.GetRegionSet(regionSetId);
+                ViewBag.CanEdit = _worldService.CanEditRegionSet(userId,regionSetId);
+                return View(model);
+            }
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult Edit(string regionSetId)
+        {
+            if (_worldService.CanEditRegionSet(User.GetUserId(), regionSetId))
+            {
+                RegionSet model = _worldService.GetRegionSet(regionSetId);
+                return View(model);
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public IActionResult Edit([Bind("RegionSetId,Name,OwnerId,ImageURL,Description,IsPublic")]RegionSet model)
+        {
+            if(ModelState.IsValid)
+            {
+                model = _worldService.UpdateRegionSet(model);
+                return RedirectToAction("RegionSet",model);
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        public JsonResult RegionSetSearch(string searchTerm = null)
+        {
+            var userId = User.GetUserId();
+            WorldIndexViewModel model = new WorldIndexViewModel();
+            IEnumerable<UserModel> users = _userRepository.GetUsers();
+            UserModel defaultUser = new UserModel(new Microsoft.AspNetCore.Identity.IdentityUser("UNKNOWN"), new List<Claim>());
+            model.OwnedRegionSets = _worldService.GetOwnedRegionSets(userId, searchTerm);
+            var editableRegionSets = _worldService.GetEditableRegionSets(userId, searchTerm);
+            if (editableRegionSets != null) {
+                model.EditableRegionSets = editableRegionSets.GroupBy(rs =>
+                    (users.FirstOrDefault(u => u.IdentityUser.Id == rs.OwnerId) ?? defaultUser)
+                        .IdentityUser.UserName)
+                .Select(g => new RegionSetCollectionModel(g)).ToList();
+            }
+            var viewableRegionSets = _worldService.GetViewableRegionSets(userId, searchTerm);
+            if (viewableRegionSets != null) {
+                model.ViewableRegionSets = viewableRegionSets.GroupBy(rs =>
+                        (users.FirstOrDefault(u => u.IdentityUser.Id == rs.OwnerId) ?? defaultUser)
+                            .IdentityUser.UserName)
+                    .Select(g => new RegionSetCollectionModel(g)).ToList();
+            }
+            return Json(model);
         }
     }
 }

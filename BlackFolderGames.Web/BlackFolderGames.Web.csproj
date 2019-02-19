@@ -27,11 +27,10 @@
     <Folder Include="Areas\PentadSystem\Models\" />
     <Folder Include="Areas\PentadSystem\Views\" />
     <Folder Include="Areas\WorldBuilder\Data\" />
-    <Folder Include="Areas\WorldBuilder\Models\" />
-    <Folder Include="Areas\WorldBuilder\Views\" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BlackFolderGames.Application\BlackFolderGames.Application.csproj" />
     <ProjectReference Include="..\WorldBuilder.Data\WorldBuilder.Data.csproj" />
   </ItemGroup>
 

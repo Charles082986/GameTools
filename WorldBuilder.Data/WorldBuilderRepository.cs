@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WorldBuilder.Data.EqualityComparers;
 
 namespace WorldBuilder.Data
 {
@@ -13,31 +14,48 @@ namespace WorldBuilder.Data
             _client = factory.Create();
         }
 
-        public Region AddPointOfInterest(Guid parentRegionId, Guid poiId)
+        public Region AddPointOfInterest(string parentRegionId, string poiId)
         {
             _client.Cypher
-                .Match("(r:Region),(p:PointOfInterest)")
+                .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region),(p:PointOfInterest)")
                 .Where((Region r) => r.RegionId == parentRegionId)
                 .AndWhere((PointOfInterest p) => p.PointOfInterestId == poiId)
+                .Set("rs.LastEdit = {date}")
+                .WithParams(new { date = DateTime.UtcNow })
                 .CreateUnique("r-[:CONTAINS]->p")
                 .ExecuteWithoutResults();
             return GetFullRegion(parentRegionId);
         }
 
-        public Region[] AddRegionRelationship(Guid parentRegionId, Guid childRegionId)
+        public Region[] AddRegionRelationship(string parentRegionId, string childRegionId)
         {
             _client.Cypher
-                .Match("(r1:Region),(r2:Region)")
+                .Match("(rs:RegionSet)-[:CONTAINS*]->(r1:Region),(r2:Region)")
                 .Where((Region r1) => r1.RegionId == parentRegionId)
                 .AndWhere((Region r2) => r2.RegionId == childRegionId)
+                .Set("rs.LastEdit = {date}")
+                .WithParams(new { date = DateTime.UtcNow })
                 .CreateUnique("r1-[:CONTAINS]->r2")
                 .ExecuteWithoutResults();
             return new Region[] { GetFullRegion(parentRegionId), GetFullRegion(childRegionId) };
         }
 
+        public RegionSet AddTopLevelRegion(string regionSetId, string regionId)
+        {
+            _client.Cypher
+                .Match("(rs:RegionSet),(r:Region)")
+                .Where((RegionSet rs) => rs.RegionSetId == regionSetId)
+                .AndWhere((Region r) => r.RegionId == regionId)
+                .Set("rs.LastEdit = {date}")
+                .WithParams(new { date = DateTime.Now })
+                .CreateUnique("rs-[:CONTAINS]->r")
+                .ExecuteWithoutResults();
+            return GetFullRegionSet(regionSetId);
+        }
+
         public Region Create(Region region)
         {
-            region.RegionId = Guid.NewGuid();
+            region.RegionId = Guid.NewGuid().ToString();
             _client.Cypher
                 .Merge("(r:Region { RegionId: {RegionId}})")
                 .OnCreate()
@@ -49,7 +67,7 @@ namespace WorldBuilder.Data
 
         public PointOfInterest Create(PointOfInterest poi)
         {
-            poi.PointOfInterestId = Guid.NewGuid();
+            poi.PointOfInterestId = Guid.NewGuid().ToString();
             _client.Cypher
                 .Merge("(p:PointOfInterest { PointOfInterestId: {PointOfInterestId}})")
                 .OnCreate()
@@ -61,29 +79,32 @@ namespace WorldBuilder.Data
 
         public RegionSet Create(RegionSet regionSet)
         {
-            regionSet.RegionSetId = Guid.NewGuid();
+            regionSet.RegionSetId = Guid.NewGuid().ToString();
+            regionSet.LastEdit = DateTime.Now;
             _client.Cypher
+                .Merge("(u:User { UserId: {OwnerId}})")
                 .Merge("(rs:RegionSet { RegionSetId: {RegionSetId}})")
                 .OnCreate()
                     .Set("rs = {regionSet}")
-                    .WithParams(new { regionSet.RegionSetId, regionSet })
+                .Merge("(u)-[o:OWNS]->(rs)")
+                .WithParams(new { regionSet.OwnerId, regionSet.RegionSetId, regionSet })
                 .ExecuteWithoutResults();
             return GetFullRegionSet(regionSet.RegionSetId);
         }
 
-        public RegionSet CopyRegionSet(Guid regionSetId, Guid? newOwnerId = null)
+        public RegionSet CopyRegionSet(string regionSetId, string newOwnerId = null)
         {
             RegionSet regionSet = GetFullRegionSet(regionSetId);
             var copy = regionSet;
-            copy.RegionSetId = Guid.Empty;
-            if(newOwnerId.HasValue && newOwnerId != Guid.Empty)
+            copy.RegionSetId = string.Empty;
+            if(!string.IsNullOrEmpty(newOwnerId))
             {
-                copy.OwnerId = newOwnerId.Value;
+                copy.OwnerId = newOwnerId;
             }
             copy = Create(copy);
 
-            Dictionary<Guid, Guid> regionIdMap = new Dictionary<Guid, Guid>();
-            Dictionary<Guid, Guid> poiIdMap = new Dictionary<Guid, Guid>();
+            Dictionary<string, string> regionIdMap = new Dictionary<string, string>();
+            Dictionary<string, string> poiIdMap = new Dictionary<string, string>();
             foreach(Region r in regionSet.AllRegions)
             {
                 regionIdMap.Add(r.RegionId, CopyRegion(r.RegionId, copy.RegionSetId).RegionId);
@@ -116,10 +137,10 @@ namespace WorldBuilder.Data
             return GetFullRegionSet(copy.RegionSetId);
         }
 
-        public Region CopyRegion(Guid regionId, Guid regionSetId)
+        public Region CopyRegion(string regionId, string regionSetId)
         {
             var copyRegion = GetRegion(regionId);
-            copyRegion.RegionId = Guid.Empty;
+            copyRegion.RegionId = string.Empty;
             copyRegion.RegionSetId = regionSetId;
             return Create(copyRegion);
         }
@@ -144,7 +165,7 @@ namespace WorldBuilder.Data
             return GetFullPointOfInterest(poi.PointOfInterestId);
         }
 
-        public Region ModifiyRegionRelationships(Region region)
+        public Region ModifyRegionRelationships(Region region)
         {
             var graphRegion = GetFullRegion(region.RegionId);
 
@@ -219,10 +240,10 @@ namespace WorldBuilder.Data
         }
 
 
-        public PointOfInterest CopyPointOfInterest(Guid poiId, Guid regionSetId)
+        public PointOfInterest CopyPointOfInterest(string poiId, string regionSetId)
         {
             var copyPoI = GetPointOfInterest(poiId);
-            copyPoI.PointOfInterestId = Guid.Empty;
+            copyPoI.PointOfInterestId = string.Empty;
             copyPoI.RegionSetId = regionSetId;
             return Create(copyPoI);
         }
@@ -232,8 +253,10 @@ namespace WorldBuilder.Data
             try
             {
                 _client.Cypher
-                    .OptionalMatch("(r:Region)-[rel]-()")
+                    .OptionalMatch("(rs:RegionSet)-[:CONTAINS*]->(r:Region)-[rel]-()")
                     .Where((Region r) => r.RegionId == region.RegionId)
+                    .Set("rs.LastEdit = {date}")
+                    .WithParams(new { date = DateTime.Now })
                     .Delete("rel, r")
                     .ExecuteWithoutResults();
             }
@@ -248,8 +271,10 @@ namespace WorldBuilder.Data
             try
             {
                 _client.Cypher
-                    .OptionalMatch("(p:PointOfInterest)-[rel]-()")
+                    .OptionalMatch("(rs:RegionSet)-[:CONTAINS*]->(p:PointOfInterest)-[rel]-()")
                     .Where((PointOfInterest p) => poi.PointOfInterestId == p.PointOfInterestId)
+                    .Set("rs.LastEdit = {date}")
+                    .WithParams(new { date = DateTime.Now })
                     .Delete("rel, p")
                     .ExecuteWithoutResults();
             }
@@ -292,7 +317,7 @@ namespace WorldBuilder.Data
             }
         }
 
-        public PointOfInterest GetFullPointOfInterest(Guid id)
+        public PointOfInterest GetFullPointOfInterest(string id)
         {
             try
             {
@@ -322,7 +347,7 @@ namespace WorldBuilder.Data
             
         }
 
-        public Region GetFullRegion(Guid id)
+        public Region GetFullRegion(string id)
         {
             try
             {
@@ -370,15 +395,37 @@ namespace WorldBuilder.Data
             }
         }
 
-        public RegionSet GetFullRegionSet(Guid regionSetId)
+        public User GetUser(string userId)
+        {
+            try
+            {
+                var user = _client.Cypher
+                    .Match("(u:User)")
+                    .Where((User u) => u.UserId == userId)
+                    .Return(u => u.As<User>()).Results.FirstOrDefault();
+                return user;
+            }
+            catch(Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public RegionSet GetFullRegionSet(string regionSetId)
         {
             try
             {
                 var regionSet = _client.Cypher
                     .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region),(rs)-[:CONTAINS]->(tr:Region),(rs)-[:CONTAINS*]->(p:PointOfInterest),(rs)-[:CONTAINS]->(tp:PointOfInterest)")
                     .Where((RegionSet rs) => rs.RegionSetId == regionSetId)
-                    .Return((rs, r, tr, p, tp) => new GetFullRegionSetResultSet(rs.As<RegionSet>(), r.CollectAs<Region>(), tr.CollectAs<Region>(), p.CollectAs<PointOfInterest>(), tp.CollectAs<PointOfInterest>()))
-                    .Results.FirstOrDefault();
+                    .Return((rs, r, tr, p, tp, u) => new GetFullRegionSetResultSet
+                    {
+                        RegionSet = rs.As<RegionSet>(),
+                        AllRegions = r.CollectAs<Region>(),
+                        TopLevelRegions = tr.CollectAs<Region>(),
+                        AllPointsOfInterest = p.CollectAs<PointOfInterest>(),
+                        TopLevelPointsOfInterest = tp.CollectAs<PointOfInterest>()
+                    }).Results.FirstOrDefault();
 
                 if (regionSet != null)
                 {
@@ -427,54 +474,17 @@ namespace WorldBuilder.Data
             }
         }
 
-        public RegionSet GetFullRegionSet(string regionSetName, Guid userId)
+        public RegionSet GetFullRegionSet(string regionSetName, string userId)
         {
             try
             {
                 var regionSet = _client.Cypher
-                    .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region),(rs)-[:CONTAINS]->(tr:Region),(rs)-[:CONTAINS*]->(p:PointOfInterest),(rs)-[:CONTAINS]->(tp:PointOfInterest)")
-                    .Where((RegionSet rs) => rs.OwnerId == userId && rs.Name == regionSetName)
-                    .Return((rs, r, tr, p, tp) => new GetFullRegionSetResultSet(rs.As<RegionSet>(), r.CollectAs<Region>(), tr.CollectAs<Region>(), p.CollectAs<PointOfInterest>(), tp.CollectAs<PointOfInterest>()))
-                    .Results.FirstOrDefault();
-
-                if (regionSet != null)
+                    .Match("(rs:RegionSet)")
+                    .Where((RegionSet rs) => rs.Name == regionSetName && rs.OwnerId == userId)
+                    .Return(rs => rs.As<RegionSet>()).Results.FirstOrDefault();
+                if(regionSet != null)
                 {
-                    if (regionSet.AllRegions != null && regionSet.AllRegions.Any())
-                    {
-                        regionSet.RegionSet.AllRegions = regionSet.AllRegions.ToList();
-                    }
-                    else
-                    {
-                        regionSet.RegionSet.AllRegions = new List<Region>();
-                    }
-
-                    if (regionSet.TopLevelRegions != null && regionSet.TopLevelRegions.Any())
-                    {
-                        regionSet.RegionSet.TopLevelRegions = regionSet.TopLevelRegions.ToList();
-                    }
-                    else
-                    {
-                        regionSet.RegionSet.TopLevelRegions = new List<Region>();
-                    }
-
-                    if (regionSet.AllPointsOfInterest != null && regionSet.AllPointsOfInterest.Any())
-                    {
-                        regionSet.RegionSet.AllPointsOfInterest = regionSet.AllPointsOfInterest.ToList();
-                    }
-                    else
-                    {
-                        regionSet.RegionSet.AllPointsOfInterest = new List<PointOfInterest>();
-                    }
-
-                    if (regionSet.TopLevelPointsOfInterest != null && regionSet.TopLevelPointsOfInterest.Any())
-                    {
-                        regionSet.RegionSet.TopLevelPointsOfInterest = regionSet.TopLevelPointsOfInterest.ToList();
-                    }
-                    else
-                    {
-                        regionSet.RegionSet.TopLevelPointsOfInterest = new List<PointOfInterest>();
-                    }
-                    return regionSet.RegionSet;
+                    return GetFullRegionSet(regionSet.RegionSetId);
                 }
                 return null;
             }
@@ -510,7 +520,7 @@ namespace WorldBuilder.Data
             return new List<Region>();
         }
 
-        public PointOfInterest GetPointOfInterest(Guid id)
+        public PointOfInterest GetPointOfInterest(string id)
         {
             return _client.Cypher
                 .Match("(p:PointOfInterest)")
@@ -547,7 +557,7 @@ namespace WorldBuilder.Data
             }
         }
 
-        public Region GetRegion(Guid id)
+        public Region GetRegion(string id)
         {
             return _client.Cypher
                 .Match("(r:Region)")
@@ -567,7 +577,7 @@ namespace WorldBuilder.Data
             return new List<Region>();
         }
 
-        public RegionSet GetRegionSet(Guid regionSetId)
+        public RegionSet GetRegionSet(string regionSetId)
         {
             return _client.Cypher
                 .Match("(rs:RegionSet)")
@@ -590,23 +600,27 @@ namespace WorldBuilder.Data
             return new List<Region>();
         }
 
-        public Region RemovePointOfInterest(Guid parentRegionId, Guid poiId)
+        public Region RemovePointOfInterest(string parentRegionId, string poiId)
         {
             _client.Cypher
-                .Match("(r:Region)-[c:CONTAINS]->(p:PointOfInterest)")
+                .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region)-[c:CONTAINS]->(p:PointOfInterest)")
                 .Where((Region r) => r.RegionId == parentRegionId)
                 .AndWhere((PointOfInterest p) => p.PointOfInterestId == poiId)
+                .Set("rs.LastEdit = {date}")
+                .WithParams(new { date = DateTime.Now })
                 .Delete("c")
                 .ExecuteWithoutResults();
             return GetFullRegion(parentRegionId);
         }
 
-        public Region[] RemoveRegionRelationship(Guid parentRegionId, Guid childRegionId)
+        public Region[] RemoveRegionRelationship(string parentRegionId, string childRegionId)
         {
             _client.Cypher
-                .Match("(r:Region)-[c:CONTAINS]->(r2:Region)")
+                .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region)-[c:CONTAINS]->(r2:Region)")
                 .Where((Region r) => r.RegionId == parentRegionId)
                 .AndWhere((Region r2) => r2.RegionId == childRegionId)
+                .Set("rs.LastEdit = {date}")
+                .WithParams(new { date = DateTime.Now })
                 .Delete("c")
                 .ExecuteWithoutResults();
             return new Region[] { GetFullRegion(parentRegionId), GetFullRegion(childRegionId) };
@@ -615,10 +629,10 @@ namespace WorldBuilder.Data
         public Region Update(Region region)
         {
             _client.Cypher
-                .Match("(r:Region)")
+                .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region)")
                 .Where((Region r) => r.RegionId == region.RegionId)
-                .Set("r = {region}")
-                .WithParams(new { region })
+                .Set("r = {region}, rs.LastEdit = {date}")
+                .WithParams(new { region, date = DateTime.Now })
                 .ExecuteWithoutResults();
             return GetFullRegion(region.RegionId);
         }
@@ -626,16 +640,17 @@ namespace WorldBuilder.Data
         public PointOfInterest Update(PointOfInterest poi)
         {
             _client.Cypher
-                .Match("(p:PointOfInterest)")
+                .Match("(rs:RegionSet)-[:CONTAINS*]->(p:PointOfInterest)")
                 .Where((PointOfInterest p) => p.PointOfInterestId == poi.PointOfInterestId)
-                .Set("p = {poi}")
-                .WithParams(new { poi })
+                .Set("p = {poi}, rs.LastEdit = {date}")
+                .WithParams(new { poi, date = DateTime.Now })
                 .ExecuteWithoutResults();
             return GetFullPointOfInterest(poi.PointOfInterestId);
         }
 
         public RegionSet Update(RegionSet regionSet)
         {
+            regionSet.LastEdit = DateTime.Now;
             _client.Cypher
                 .Match("(rs:RegionSet)")
                 .Where((RegionSet rs) => rs.RegionSetId == regionSet.RegionSetId)
@@ -643,6 +658,107 @@ namespace WorldBuilder.Data
                 .WithParams(new { regionSet })
                 .ExecuteWithoutResults();
             return GetFullRegionSet(regionSet.RegionSetId);
+        }
+
+        public User Create(User user)
+        {
+            return _client.Cypher
+                .Merge("(u:User { UserId: {UserId}})")
+                .OnCreate()
+                .Set("u = {user}")
+                .WithParams(new { user.UserId, user })
+                .Return(u => u.As<User>()).Results.FirstOrDefault();
+        }
+
+        public void Delete(string userId)
+        {
+            try
+            {
+                _client.Cypher
+                    .OptionalMatch("(u:User)-[rel]->()")
+                    .Where((User u) => u.UserId == userId)
+                    .Delete("rel, u")
+                    .ExecuteWithoutResults();
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        public void AddViewPermission(string userId, string regionSetId)
+        {
+            _client.Cypher
+                .Match("(rs:RegionSet),(u:User)")
+                .Where((RegionSet rs) => rs.RegionSetId == regionSetId)
+                .AndWhere((User u) => u.UserId == userId)
+                .CreateUnique("u-[:CAN_VIEW]->rs")
+                .ExecuteWithoutResults();
+        }
+
+        public void AddEditPermission(string userId, string regionSetId)
+        {
+            _client.Cypher
+                .Match("(rs:RegionSet),(u:User)")
+                .Where((RegionSet rs) => rs.RegionSetId == regionSetId)
+                .AndWhere((User u) => u.UserId == userId)
+                .CreateUnique("u-[:CAN_EDIT]->rs")
+                .CreateUnique("u-[:CAN_VIEW]->rs")
+                .ExecuteWithoutResults();
+        }
+
+        public void ChangeOwnership(string userId, string regionSetId)
+        {
+            _client.Cypher
+                .Match("(rs:RegionSet)<-[o:OWNS]-(),(u:User)")
+                .Where((RegionSet rs) => rs.RegionSetId == regionSetId)
+                .AndWhere((User u) => u.UserId == userId)
+                .Set("rs.OwnerId = {userId}")
+                .Delete("o")
+                .CreateUnique("u-[:OWNS]->rs")
+                .WithParams(new { userId })
+                .ExecuteWithoutResults();
+        }
+
+        public List<RegionSet> GetOwnedRegionSets(string userId)
+        {
+            var results = _client.Cypher
+                .Match("(u:User)-[:OWNS]->(rs:RegionSet)")
+                .Where((User u) => u.UserId == userId)
+                .Return(rs => rs.CollectAs<RegionSet>()).Results.FirstOrDefault();
+            if(results != null && results.Any()) { return results.ToList(); }
+            return null;
+        }
+
+        public List<RegionSet> GetViewableRegionSets(string userId)
+        {
+            var publicRegionSets = GetPublicRegionSets() ?? new List<RegionSet>();
+            var results = _client.Cypher
+                .Match("(u:User)-[:CAN_EDIT]->(rs:RegionSet)")
+                .Where((User u) => u.UserId == userId)
+                .Return(rs => rs.CollectAs<RegionSet>()).Results.FirstOrDefault();
+            if (results != null && results.Any()) { return results.Union(publicRegionSets).Distinct(new RegionSetEqualityComparer()).ToList(); }
+            return publicRegionSets.Any() ? publicRegionSets : null;
+        }
+
+        public List<RegionSet> GetEditableRegionSets(string userId)
+        {
+            var results = _client.Cypher
+                .Match("(u:User)-[:CAN_EDIT]->(rs:RegionSet)")
+                .Where((User u) => u.UserId == userId)
+                .Return(rs => rs.CollectAs<RegionSet>()).Results.FirstOrDefault();
+            if (results != null && results.Any()) { return results.ToList(); }
+            return null;
+        }
+
+        public List<RegionSet> GetPublicRegionSets()
+        {
+            var results = _client.Cypher
+                .Match("(rs:RegionSet)")
+                .Where((RegionSet rs) => rs.IsPublic == true)
+                .Return(rs => rs.As<RegionSet>()).Results;
+            if(results != null && results.Any()) { return results.ToList(); }
+            return null;
         }
     }
 }

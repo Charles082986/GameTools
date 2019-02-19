@@ -9,8 +9,8 @@ namespace WorldBuilder.Data
 {
     public class Region
     {
-        public Guid RegionId { get; set; }
-        public Guid RegionSetId { get; set; }
+        public string RegionId { get; set; }
+        public string RegionSetId { get; set; }
         [JsonIgnore]
         public List<Region> InnerRegions { get; set; }
         [JsonIgnore]
@@ -20,6 +20,8 @@ namespace WorldBuilder.Data
         public string Category { get; set; }
         public string Description { get; set; }
         public string Name { get; set; }
+        public string ImageURL { get; set; }
+        public string MapImageURL { get; set; }
     }
 
     public class RegionEqualityComparer : IEqualityComparer<Region>

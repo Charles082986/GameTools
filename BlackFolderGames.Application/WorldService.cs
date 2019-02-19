@@ -7,12 +7,79 @@ using WorldBuilder.Data;
 
 namespace BlackFolderGames.Application
 {
-    public class WorldService
+    public class WorldService : IWorldService
     {
         private IWorldBuilderRepository _repo;
         public WorldService(IWorldBuilderRepository repository)
         {
             _repo = repository;
+        }
+
+        public RegionSet CreateRegionSet(RegionSet regionSet)
+        {
+            return _repo.Create(regionSet);
+        }
+
+        public RegionSet GetRegionSet(string regionSetId)
+        {
+            return _repo.GetFullRegionSet(regionSetId);
+        }
+
+        public RegionSet UpdateRegionSet(RegionSet regionSet)
+        {
+            return _repo.Update(regionSet);
+        }
+
+        public bool CanEditRegionSet(string userId, string regionSetId)
+        {
+            var regionSets = _repo.GetEditableRegionSets(userId);
+            var regionSet = _repo.GetRegionSet(regionSetId);
+            return (regionSets != null && regionSets.FirstOrDefault(rs => rs.RegionSetId == regionSetId) != null) || (regionSet != null && regionSet.OwnerId == userId);
+        }
+
+        public bool CanViewRegionSet(string userId, string regionSetId)
+        {
+            var viewableRegionSets = _repo.GetViewableRegionSets(userId);
+            return (viewableRegionSets != null && viewableRegionSets.FirstOrDefault(rs => rs.RegionSetId == regionSetId) != null) || CanEditRegionSet(userId, regionSetId);
+        }
+
+        public List<RegionSet> GetOwnedRegionSets(string userId, string searchTerm = null)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                return _repo.GetOwnedRegionSets(userId);
+            }
+            else
+            {
+                var results = _repo.GetOwnedRegionSets(userId).Where(rs => rs.Name.Contains(searchTerm));
+                return results.ToList();
+            }
+        }
+
+        public List<RegionSet> GetEditableRegionSets(string userId, string searchTerm = null)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                return _repo.GetEditableRegionSets(userId);
+            }
+            else
+            {
+                var results = _repo.GetEditableRegionSets(userId).Where(rs => rs.Name.Contains(searchTerm));
+                return results.ToList();
+            }
+        }
+
+        public List<RegionSet> GetViewableRegionSets(string userId, string searchTerm = null)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                return _repo.GetViewableRegionSets(userId);
+            }
+            else
+            {
+                var results = _repo.GetViewableRegionSets(userId).Where(rs => rs.Name.Contains(searchTerm));
+                return results.ToList();
+            }
         }
 
         public Region CreateRegion(Region region)
@@ -63,43 +130,10 @@ namespace BlackFolderGames.Application
 
         public Region ModifyPointOfInterestRelationships(Region region)
         {
-            Region savedRegion;
-            if (region.RegionId == null)
-            {
-                savedRegion = CreateRegion(region);
-            }
-            else
-            {
-                savedRegion = GetFullRegion(region.RegionId);
-            }
-
-            var poisToAdd = region.PointsOfInterest.Except(savedRegion.PointsOfInterest, new PointOfInterestComparer());
-            var poisToRemove = savedRegion.PointsOfInterest.Except(region.PointsOfInterest, new PointOfInterestComparer());
-
-            foreach(PointOfInterest p in poisToAdd)
-            {
-                PointOfInterest workingPoI = p;
-                if(workingPoI.PointOfInterestId == null)
-                {
-                    workingPoI = CreatePointOfInterest(workingPoI);
-                }
-                _repo.AddPointOfInterest(savedRegion.RegionId, workingPoI.PointOfInterestId);
-            }
-
-            foreach(PointOfInterest p in poisToRemove)
-            {
-                PointOfInterest workingPoI = p;
-                if(workingPoI.PointOfInterestId == null)
-                {
-                    workingPoI = CreatePointOfInterest(workingPoI);
-                }
-                _repo.RemovePointOfInterest(savedRegion.RegionId, workingPoI.PointOfInterestId);
-            }
-
-            return GetFullRegion(savedRegion.RegionId);
+            return _repo.ModifyRegionRelationships(region);
         }
 
-        public Region GetFullRegion(Guid id)
+        public Region GetFullRegion(string id)
         {
             var region = _repo.GetRegion(id);
             region.InnerRegions = _repo.GetChildRegions(region);
@@ -108,7 +142,7 @@ namespace BlackFolderGames.Application
             return region;
         }
 
-        public PointOfInterest GetFullPointOfInterest(Guid id)
+        public PointOfInterest GetFullPointOfInterest(string id)
         {
             var poi = _repo.GetPointOfInterest(id);
             poi.Regions = _repo.GetParentRegion(poi);

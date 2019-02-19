@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "World Builder";
+}
+
+
+<ul class="nav nav-tabs card-header-tabs" id="regionSetTabs" role="tablist">
+    <li class="nav-item active">
+        <a class="navbar-link" id="owned-tab" data-toggle="tab" role="tab" href="#owned">My Region Sets (<span id="owned-count">0</span>)</a>
+    </li>
+    <li class="nav-item">
+        <a class="navbar-link" id="shared-tab" data-toggle="tab" role="tab" href="#shared">Shared Region Sets (<span id="shared-count">0</span>)</a>
+    </li>
+    <li class="nav-item">
+        <a class="navbar-link" id="browse-tab" data-toggle="tab" role="tab" href="#browse">Browse Region Sets (<span id="browse-count">0</span>)</a>
+    </li>
+    <li class="nav-item col-md-4">
+        <form class="form-inline">
+            <input class="form-control col-md-12" id="search" type="search" placeholder="Search" />
+        </form>
+    </li>
+</ul>
+<div class="tab-content" id="regionsetTabsContent">
+    <div class="tab-pane fade show active in" id="owned" role="tabpanel"></div>
+    <div class="tab-pane fade" id="shared" role="tabpanel"></div>
+    <div class="tab-pane fade" id="browse" role="tabpanel"></div>
+</div>
+
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/BootstrapCardBuilder.js"></script>
+    <script type="text/javascript" src="~/js/WoldBuilderTabLoader.js"></script>
+    <script>
+        let searchTimer = null;
+        let previousSearchTerm = '';
+        let searchCards = (event) => {
+            let searchTerm = $(event.target).text();
+            if (searchTerm !== previousSearchTerm) {
+                previousSearchTerm = searchTerm;
+                searchTimer = null;
+                searchTimer = setTimeout(() => { fetchRegionSetData(searchTerm); },1000);
+            }
+        }
+        $('#search').keypress(searchCards);
+        fetchRegionSetData();
+    </script>
+}
