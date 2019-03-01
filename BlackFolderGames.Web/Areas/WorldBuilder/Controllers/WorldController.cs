@@ -82,29 +82,6 @@ namespace BlackFolderGames.Web.Areas.WorldBuilder.Controllers
             return View(model);
         }
 
-        [HttpGet]
-        public JsonResult RegionSetSearch(string searchTerm = null)
-        {
-            var userId = User.GetUserId();
-            WorldIndexViewModel model = new WorldIndexViewModel();
-            IEnumerable<UserModel> users = _userRepository.GetUsers();
-            UserModel defaultUser = new UserModel(new Microsoft.AspNetCore.Identity.IdentityUser("UNKNOWN"), new List<Claim>());
-            model.OwnedRegionSets = _worldService.GetOwnedRegionSets(userId, searchTerm);
-            var editableRegionSets = _worldService.GetEditableRegionSets(userId, searchTerm);
-            if (editableRegionSets != null) {
-                model.EditableRegionSets = editableRegionSets.GroupBy(rs =>
-                    (users.FirstOrDefault(u => u.IdentityUser.Id == rs.OwnerId) ?? defaultUser)
-                        .IdentityUser.UserName)
-                .Select(g => new RegionSetCollectionModel(g)).ToList();
-            }
-            var viewableRegionSets = _worldService.GetViewableRegionSets(userId, searchTerm);
-            if (viewableRegionSets != null) {
-                model.ViewableRegionSets = viewableRegionSets.GroupBy(rs =>
-                        (users.FirstOrDefault(u => u.IdentityUser.Id == rs.OwnerId) ?? defaultUser)
-                            .IdentityUser.UserName)
-                    .Select(g => new RegionSetCollectionModel(g)).ToList();
-            }
-            return Json(model);
-        }
+
     }
 }

@@ -51,7 +51,7 @@ namespace BlackFolderGames.Application
             }
             else
             {
-                var results = _repo.GetOwnedRegionSets(userId).Where(rs => rs.Name.Contains(searchTerm));
+                var results = (_repo.GetOwnedRegionSets(userId) ?? new List<RegionSet>()).Where(rs => rs.Name.Contains(searchTerm));
                 return results.ToList();
             }
         }
@@ -64,7 +64,7 @@ namespace BlackFolderGames.Application
             }
             else
             {
-                var results = _repo.GetEditableRegionSets(userId).Where(rs => rs.Name.Contains(searchTerm));
+                var results = (_repo.GetEditableRegionSets(userId) ?? new List<RegionSet>()).Where(rs => rs.Name.Contains(searchTerm));
                 return results.ToList();
             }
         }
@@ -77,7 +77,7 @@ namespace BlackFolderGames.Application
             }
             else
             {
-                var results = _repo.GetViewableRegionSets(userId).Where(rs => rs.Name.Contains(searchTerm));
+                var results = (_repo.GetViewableRegionSets(userId) ?? new List<RegionSet>()).Where(rs => rs.Name.Contains(searchTerm));
                 return results.ToList();
             }
         }

@@ -35,3 +35,28 @@ body {
         display: none;
     }
 }
+
+
+.card-image {
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 100%;
+}
+
+.card-image img{
+    position: absolute;
+    width: 100%;
+}
+
+.card a{
+    color: #000;
+    text-decoration:none;
+}
+
+.borders {
+    border: 1px solid black;
+}
+
+.card.borders:hover {
+    border: 1px outset black;
+}

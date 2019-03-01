@@ -109,7 +109,7 @@ namespace BlackFolderGames.Web
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             
-
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
@@ -118,8 +118,10 @@ namespace BlackFolderGames.Web
 
             app.UseMvc(routes =>
             {
+
                 routes.MapRoute(name: "areaRoute",
                   template: "{area}/{controller=Home}/{action=Index}/{id?}");
+
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
