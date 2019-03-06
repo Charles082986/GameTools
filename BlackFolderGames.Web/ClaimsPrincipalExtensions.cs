@@ -14,4 +14,5 @@ namespace BlackFolderGames.Web
             return userIdClaim != null ? userIdClaim.Value : null;
         }
     }
+
 }

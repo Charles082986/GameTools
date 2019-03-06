@@ -196,6 +196,24 @@ namespace WorldBuilder.Data
             return GetFullRegion(region.RegionId);
         }
 
+        public Region ModifyParentRegionRelationships(Region region, Region graphRegion = null)
+        {
+            if (graphRegion == null)
+            {
+                graphRegion = GetFullRegion(region.RegionId);
+            }
+            if (region.ParentRegion == null)
+            {
+                RemoveRegionRelationship(graphRegion.ParentRegion.RegionId, region.RegionId);
+            }
+            else if (graphRegion.ParentRegion != null && graphRegion.ParentRegion.RegionId != region.ParentRegion.RegionId)
+            {
+                RemoveRegionRelationship(graphRegion.ParentRegion.RegionId, region.RegionId);
+                AddRegionRelationship(region.ParentRegion.RegionId, region.RegionId);
+            }
+            return GetFullRegion(region.RegionId);
+        }
+
         public Region ModifyChildRegionRelationships(Region region, Region graphRegion = null)
         {
             if (graphRegion == null)
@@ -213,27 +231,6 @@ namespace WorldBuilder.Data
             foreach (var r in childRegionsToRemove)
             {
                 RemoveRegionRelationship(region.RegionId, r.RegionId);
-            }
-
-            return GetFullRegion(region.RegionId);
-        }
-
-        public Region ModifyParentRegionRelationships(Region region, Region graphRegion = null)
-        {
-            if(graphRegion == null)
-            {
-                graphRegion = GetFullRegion(region.RegionId);
-            }
-
-            var parentRegionsToAdd = region.ParentRegions.Except(graphRegion.ParentRegions, new RegionEqualityComparer());
-            var parentRegionsToRemove = graphRegion.ParentRegions.Except(region.ParentRegions, new RegionEqualityComparer());
-            foreach (var r in parentRegionsToAdd)
-            {
-                AddRegionRelationship(r.RegionId, region.RegionId);
-            }
-            foreach (var r in parentRegionsToRemove)
-            {
-                RemoveRegionRelationship(r.RegionId, region.RegionId);
             }
 
             return GetFullRegion(region.RegionId);
@@ -300,6 +297,23 @@ namespace WorldBuilder.Data
             }
         }
 
+        public List<Region> GetChildRegions(RegionSet regionSet)
+        {
+            var childRegions = _client.Cypher
+                .Match("(rs:RegionSet)-[:CONTAINS]->(r2:Region)")
+                .Where((RegionSet rs) => rs.RegionSetId == regionSet.RegionSetId)
+                .Return((r2) => r2.CollectAs<Region>())
+                .Results.FirstOrDefault();
+            if (childRegions != null && childRegions.Any())
+            {
+                return childRegions.ToList();
+            }
+            else
+            {
+                return new List<Region>();
+            }
+        }
+
         public List<Region> GetChildRegions(Region region)
         {
             var childRegions = _client.Cypher
@@ -361,11 +375,11 @@ namespace WorldBuilder.Data
                 {
                     if (firstResult.ParentRegions != null && firstResult.ParentRegions.Any())
                     {
-                        firstResult.Region.ParentRegions = firstResult.ParentRegions.ToList();
+                        firstResult.Region.ParentRegion = firstResult.ParentRegions.FirstOrDefault();
                     }
                     else
                     {
-                        firstResult.Region.ParentRegions = new List<Region>();
+                        firstResult.Region.ParentRegion = null;
                     }
 
                     if (firstResult.InnerRegions != null && firstResult.InnerRegions.Any())
@@ -416,8 +430,12 @@ namespace WorldBuilder.Data
             try
             {
                 var regionSet = _client.Cypher
-                    .Match("(rs:RegionSet)-[:CONTAINS*]->(r:Region),(rs)-[:CONTAINS]->(tr:Region),(rs)-[:CONTAINS*]->(p:PointOfInterest),(rs)-[:CONTAINS]->(tp:PointOfInterest)")
-                    .Where((RegionSet rs) => rs.RegionSetId == regionSetId)
+                    .Match("(rs:RegionSet { RegionSetId: {regionSetId} })")
+                    .OptionalMatch("(rs)-[:CONTAINS*]->(r: Region)")
+                    .OptionalMatch("(rs)-[:CONTAINS]->(tr: Region)")
+                    .OptionalMatch("(rs)-[:CONTAINS*]->(p: PointOfInterest)")
+                    .OptionalMatch("(rs)-[:CONTAINS]->(tp: PointOfInterest)")
+                    .WithParams(new { regionSetId })
                     .Return((rs, r, tr, p, tp, u) => new GetFullRegionSetResultSet
                     {
                         RegionSet = rs.As<RegionSet>(),
@@ -494,7 +512,7 @@ namespace WorldBuilder.Data
             }
         }
 
-        public List<Region> GetParentRegion(Region region)
+        public Region GetParentRegion(Region region)
         {
             var regions = _client.Cypher
                 .Match("(r:Region)<-[:CONTAINS]-(r2:Region)")
@@ -502,12 +520,12 @@ namespace WorldBuilder.Data
                 .Return(r2 => r2.CollectAs<Region>()).Results.FirstOrDefault();
             if(regions != null && regions.Any())
             {
-                return regions.ToList();
+                return regions.FirstOrDefault();
             }
-            return new List<Region>();
+            return null;
         }
 
-        public List<Region> GetParentRegion(PointOfInterest poi)
+        public List<Region> GetParentRegions(PointOfInterest poi)
         {
             var regions = _client.Cypher
                 .Match("(p:PointOfInterest)<-[:CONTAINS]-(r2:Region)")
@@ -759,6 +777,11 @@ namespace WorldBuilder.Data
                 .Return(rs => rs.As<RegionSet>()).Results;
             if(results != null && results.Any()) { return results.ToList(); }
             return null;
+        }
+
+        public List<Region> GetOverlappingRegions(Region region)
+        {
+            throw new NotImplementedException();
         }
     }
 }

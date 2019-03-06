@@ -16,18 +16,20 @@ namespace WorldBuilder.Data
         void Delete(PointOfInterest poi);
         void Delete(Region region);
         void Delete(RegionSet regionSet);
+        List<Region> GetChildRegions(RegionSet regionset);
         List<Region> GetChildRegions(Region region);
         PointOfInterest GetFullPointOfInterest(string id);
         Region GetFullRegion(string id);
         RegionSet GetFullRegionSet(string regionSetId);
         RegionSet GetFullRegionSet(string regionSetName, string userId);
-        List<Region> GetParentRegion(PointOfInterest poi);
-        List<Region> GetParentRegion(Region region);
+        List<Region> GetParentRegions(PointOfInterest poi);
+        Region GetParentRegion(Region region);
         PointOfInterest GetPointOfInterest(string id);
         List<PointOfInterest> GetPointsOfInterest();
         List<PointOfInterest> GetPointsOfInterest(Region region);
         Region GetRegion(string id);
         List<Region> GetRegions();
+        List<Region> GetOverlappingRegions(Region region);
         RegionSet GetRegionSet(string regionSetId);
         
         List<Region> GetRootRegions(Region region);

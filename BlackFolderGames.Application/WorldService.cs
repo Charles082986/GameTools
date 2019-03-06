@@ -137,7 +137,7 @@ namespace BlackFolderGames.Application
         {
             var region = _repo.GetRegion(id);
             region.InnerRegions = _repo.GetChildRegions(region);
-            region.ParentRegions = _repo.GetParentRegion(region);
+            region.ParentRegion = _repo.GetParentRegion(region);
             region.PointsOfInterest = _repo.GetPointsOfInterest(region);
             return region;
         }
@@ -145,7 +145,7 @@ namespace BlackFolderGames.Application
         public PointOfInterest GetFullPointOfInterest(string id)
         {
             var poi = _repo.GetPointOfInterest(id);
-            poi.Regions = _repo.GetParentRegion(poi);
+            poi.Regions = _repo.GetParentRegions(poi);
             return poi;
         }
     }

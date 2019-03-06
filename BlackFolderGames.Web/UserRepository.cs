@@ -20,6 +20,12 @@ namespace BlackFolderGames.Web
 
         public UserManager<IdentityUser> Manager { get; set; }
 
+        public UserModel GetUser(string userId)
+        {
+            var identity = Manager.FindByIdAsync(userId).Result;
+            return new UserModel(identity, Manager.GetClaimsAsync(identity).Result.ToList());
+        }
+
         public IEnumerable<UserModel> GetUsers()
         {
             var users = Manager.Users.ToList();

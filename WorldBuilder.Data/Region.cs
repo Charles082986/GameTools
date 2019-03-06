@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,7 +15,9 @@ namespace WorldBuilder.Data
         [JsonIgnore]
         public List<Region> InnerRegions { get; set; }
         [JsonIgnore]
-        public List<Region> ParentRegions { get; set; }
+        public Region ParentRegion { get; set; }
+        [JsonIgnore]
+        public List<Region> OverlappingRegions { get; set; }
         [JsonIgnore]
         public List<PointOfInterest> PointsOfInterest { get; set; }
         public string Category { get; set; }

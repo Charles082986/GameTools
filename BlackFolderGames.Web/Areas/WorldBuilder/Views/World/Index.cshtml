@@ -30,27 +30,46 @@
     </li>
 </ul>
 <div class="tab-content col-md-12 clearfix" id="regionsetTabsContent">
-    <div class="tab-pane fade active in" id="owned" role="tabpanel"></div>
+    <div class="tab-pane fade active in" id="owned" role="tabpanel">
+        <h4 class="empty-tab hide">You don't own any region sets.  Would you like to <a href='/WorldBuilder/World/Create'>Create A New Region Set</a>?</h4>
+    </div>
     <div class="tab-pane fade" id="shared" role="tabpanel"></div>
     <div class="tab-pane fade" id="browse" role="tabpanel"></div>
 </div>
 
 
-@section Scripts {
-    <script type="text/javascript" src="/js/BootstrapCardBuilder.js"></script>
-    <script type="text/javascript" src="/js/WoldBuilderTabLoader.js"></script>
-    <script>
-        let searchTimer = null;
-        let previousSearchTerm = '';
-        let searchCards = (event) => {
-            let searchTerm = $(event.target).val();
-            if (searchTerm !== previousSearchTerm) {
-                previousSearchTerm = searchTerm;
-                clearTimeout(searchTimer);
-                searchTimer = setTimeout(fetchRegionSetData, 1000, searchTerm);
+    @section Scripts {
+        <script type="text/javascript" src="/js/BootstrapCardBuilder.js"></script>
+        <script type="text/javascript" src="/js/WoldBuilderTabLoader.js"></script>
+        <script type="text/javascript" src="/js/SearchBox.js"></script>
+        <script>
+            let getOwnedRegionSetsEndpoint = '/WorldBuilder/WorldApi/GetOwnedRegionSets';
+            let getSharedRegionSetsEndpoint = '/WorldBuilder/WorldApi/GetSharedRegionSets';
+            let getBrowseableRegionSetsEndpoint = '/WorldBuilder/WorldApi/GetBrowseableRegionSets';
+            let cardBuilder = new BoostrapCardBuilder(
+                (context) => { return context.regionSetId; },
+                () => { return 'col-md-3'; },
+                (context) => { return `/WorldBuilder/World/RegionSet?regionSetId=${context.regionSetId}`; },
+                (context) => { return context.imageURL; },
+                (context) => { return context.name; },
+                () => { return null; },
+                () => { return "GO »"; }
+            );
+            let tabFiller = new CardTabFiller(cardBuilder);
+            let bindData = (content, tabSelector, countSelector = null, emptyMessageSelector = null) => {
+                if (!content || content.length == 0) {
+                    $(emptyMessageSelector).show();
+                } else {
+                    tabFiller.FillTab(tabSelector, content, countSelector);
+                }
             }
-        }
-        $('#search').on('keypress',searchCards);
-        fetchRegionSetData();
-    </script>
-}
+            let fetchCards = (searchTerm = null) => {
+                let queryString = (searchTerm && searchTerm.length > 0) ? '?searchTerm=' + searchTerm : '';
+                $.get(getOwnedRegionSetsEndpoint + queryString).done((data) => bindData(data, '#owned', '#owned-count', '#owned .empty-tab'));
+                $.get(getSharedRegionSetsEndpoint + queryString).done((data) => bindData(data, '#shared', '#shared-count', '#shared .empty-tab'));
+                $.get(getBrowseableRegionSetsEndpoint + queryString).done((data) => bindData(data, '#browse', '#browse-count', '#browse .empty-tab'));
+            };
+
+            let searchBox = new SearchBox('#search', 1000, fetchCards);
+        </script>
+    }

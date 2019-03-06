@@ -56,6 +56,7 @@ namespace BlackFolderGames.Web.Areas.WorldBuilder.Controllers
             {
                 RegionSet model = _worldService.GetRegionSet(regionSetId);
                 ViewBag.CanEdit = _worldService.CanEditRegionSet(userId,regionSetId);
+                ViewBag.Owner = _userRepository.GetUser(model.OwnerId);
                 return View(model);
             }
             return RedirectToAction("Index");
@@ -81,7 +82,5 @@ namespace BlackFolderGames.Web.Areas.WorldBuilder.Controllers
             }
             return View(model);
         }
-
-
     }
 }
