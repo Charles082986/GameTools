@@ -22,9 +22,9 @@ namespace BlackFolderGames.Web.Controllers
         }
 
         [HttpGet]
-        public ActionResult GetByFriendlyName(string name)
+        public ActionResult GetByFriendlyName(string ownerId, string name)
         {
-            byte[] image = _images.GetByFriendlyName(name);
+            byte[] image = _images.GetByFriendlyName(ownerId, name);
             string contentType = string.Empty;
             if(image != null && image.Length > 0 && ImageHelper.TryGetImageContentType(image,out contentType))
             {
@@ -34,9 +34,9 @@ namespace BlackFolderGames.Web.Controllers
         }
 
         [HttpGet]
-        public ActionResult GetById(string id)
+        public ActionResult GetById(string ownerId, string id)
         {
-            byte[] image = _images.GetById(id);
+            byte[] image = _images.GetById(ownerId, id);
             string contentType = string.Empty;
             if (image != null && image.Length > 0 && ImageHelper.TryGetImageContentType(image, out contentType))
             {
@@ -54,21 +54,11 @@ namespace BlackFolderGames.Web.Controllers
             {
                 if (_images.IsFriendlyNameSanitary(friendlyName))
                 {
-                    if (_images.IsFriendlyNameAvailable(friendlyName) || _images.IsOwner(friendlyName, userId))
+                    if(_images.UploadImage(image, friendlyName, userId))
                     {
-                        if(_images.UploadImage(image, friendlyName, userId))
-                        {
-                            return Ok();
-                        }
-                        else
-                        {
-                            return StatusCode(StatusCodes.Status500InternalServerError);
-                        }
+                        return Ok();
                     }
-                    else
-                    {
-                        return BadRequest(new ArgumentException("Friendly name is already taken."));
-                    }
+                    return Ok();
                 }
                 else
                 {
@@ -84,7 +74,8 @@ namespace BlackFolderGames.Web.Controllers
         [HttpGet]
         public ActionResult CheckImageFriendlyNameAvailability(string friendlyName)
         {
-            return base.Ok(_images.IsFriendlyNameSanitary(friendlyName) && _images.IsFriendlyNameAvailable(friendlyName));
+            string userId = User.GetUserId();
+            return base.Ok(_images.IsFriendlyNameSanitary(friendlyName) && _images.GetByFriendlyName(userId, friendlyName) == null);
         }
     }
 }

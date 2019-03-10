@@ -11,6 +11,6 @@ namespace BlackFolderGames.Data.Interfaces
         IBasicOperation<ImageLog>
     {
         T Get<T>(string id) where T : EntityBase;
-        ImageLog GetImageLogByFriendlyName(string friendlyName);
+        ImageLog GetImageLogByFriendlyName(string userId, string friendlyName);
     }
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.IO;
 using BlackFolderGames.Application.Interfaces;
 using BlackFolderGames.Application.Utilities;
+using System.Text.RegularExpressions;
 
 namespace BlackFolderGames.Application
 {
@@ -21,46 +22,33 @@ namespace BlackFolderGames.Application
             _rootPath = rootPath;
         }
 
-        public byte[] GetByFriendlyName(string name)
+        public byte[] GetByFriendlyName(string userId, string name)
         {
-            throw new NotImplementedException();
+            ImageLog imageLog = _data.GetImageLogByFriendlyName(userId, name);
+            if(imageLog != null)
+            {
+                return GetImageFile(userId, imageLog.Id);
+            }
+            return null;
         }
 
-        public byte[] GetById(string id)
+        public byte[] GetById(string userId, string id)
         {
-            throw new NotImplementedException();
+            return GetImageFile(userId, id);
         }
 
-        public bool IsFriendlyNameAvailable(string friendlyName)
+        public bool IsFriendlyNameAvailable(string userId, string friendlyName)
         {
-            throw new NotImplementedException();
+            return _data.GetImageLogByFriendlyName(userId, friendlyName) == null;
         }
 
         public bool IsFriendlyNameSanitary(string friendlyName)
         {
-            throw new NotImplementedException();
+            return new Regex("^[a-zA-Z0-9-_]+$").IsMatch(friendlyName);
         }
-
-        public bool IsOwner(string friendlyName, string userId)
-        {
-            if (string.IsNullOrEmpty(friendlyName)) { throw new ArgumentNullException("friendlyName"); }
-            if (string.IsNullOrEmpty(userId)) { throw new ArgumentNullException("userId"); }
-            ImageLog imageLog = _data.GetImageLogByFriendlyName(friendlyName);
-            if(imageLog != null)
-            {
-                return imageLog.OwnerId == userId;
-            }
-            throw new ArgumentOutOfRangeException("frinedlyName", "No image found for friendly name.");
-        }
-
-        public bool CheckImageExistsByFriendlyName(string friendlyName)
-        {
-            throw new NotImplementedException();
-        }
-
         public bool CheckImageExistsById(string id)
         {
-            throw new NotImplementedException();
+            return _data.Get<ImageLog>(id) != null;
         }
 
         public bool UploadImage(byte[] image, string friendlyName, string userId)
@@ -69,10 +57,9 @@ namespace BlackFolderGames.Application
             {
                 throw new ArgumentException("Friendly name is not sanitary.", "friendlyName");
             }
-            if (CheckImageExistsByFriendlyName(friendlyName))
+            var imageLog = _data.GetImageLogByFriendlyName(userId, friendlyName);
+            if (imageLog != null)
             {
-                var imageLog = _data.GetImageLogByFriendlyName(friendlyName);
-                if(imageLog != null && imageLog.OwnerId != userId) { return false; }
                 if(SaveFile(image, userId, imageLog.Id, true))
                 {
                     return true;
@@ -81,7 +68,7 @@ namespace BlackFolderGames.Application
             }
             else
             {
-                var imageLog = _data.Create(new ImageLog { FriendlyName = friendlyName, OwnerId = userId });
+                imageLog = _data.Create(new ImageLog { FriendlyName = friendlyName, OwnerId = userId });
                 if(SaveFile(image, userId, imageLog.Id, false))
                 {
                     return true;
@@ -99,6 +86,7 @@ namespace BlackFolderGames.Application
                 try
                 {
                     string path = Path.Combine(_rootPath, userId, imageId + "." + imageExtension);
+                    DeleteExistingFiles(userId, imageId);
                     if (File.Exists(path) && overwriteIfExists) { File.Delete(path); } else { return false; }
                     var stream = File.Create(path, file.Length);
                     stream.Write(file, 0, file.Length);
@@ -111,6 +99,27 @@ namespace BlackFolderGames.Application
                 }
             }
             return false;
+        }
+
+        private void DeleteExistingFiles(string userId, string imageId)
+        {
+            string path = Path.Combine(_rootPath, userId);
+            var files = Directory.GetFiles(path, imageId + ".*");
+            foreach(var file in files)
+            {
+                File.Delete(file);
+            }
+        }
+
+        private byte[] GetImageFile(string userId, string imageId)
+        {
+            string path = Path.Combine(_rootPath, userId);
+            var files = Directory.GetFiles(path, imageId + ".*");
+            if(files != null && files.Length > 0)
+            {
+                return File.ReadAllBytes(files[0]);
+            }
+            return null;
         }
     }
 }

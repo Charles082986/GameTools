@@ -118,9 +118,9 @@ namespace BlackFolderGames.Data.Repositories
             }
         }
 
-        public ImageLog GetImageLogByFriendlyName(string friendlyName)
+        public ImageLog GetImageLogByFriendlyName(string ownerId, string friendlyName)
         {
-            return _ctx.ImageLogs.FirstOrDefault(il => il.FriendlyName == friendlyName);
+            return _ctx.ImageLogs.FirstOrDefault(il => il.FriendlyName == friendlyName && il.OwnerId == ownerId);
         }
 
         public T Get<T>(string id) where T : EntityBase
