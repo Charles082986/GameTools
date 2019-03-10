@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BlackFolderGames.Data\BlackFolderGames.Data.csproj" />
     <ProjectReference Include="..\WorldBuilder.Data\WorldBuilder.Data.csproj" />
   </ItemGroup>
 

@@ -11,9 +11,9 @@
             count++;
             cards.push(this.CardBuilder.BuildCard(item));
         }
-        $(tabSelector.append(cards.join('')));
+        $(tabSelector).append(cards.join(''));
         if (countSelector) {
-            $(countSelector).text(cardCount);
+            $(countSelector).text(count);
         }
     }
 };

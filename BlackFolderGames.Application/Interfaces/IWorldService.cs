@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using WorldBuilder.Data;
 
-namespace BlackFolderGames.Application
+namespace BlackFolderGames.Application.Interfaces
 {
     public interface IWorldService
     {

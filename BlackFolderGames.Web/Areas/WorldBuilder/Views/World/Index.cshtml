@@ -40,7 +40,7 @@
 
     @section Scripts {
         <script type="text/javascript" src="/js/BootstrapCardBuilder.js"></script>
-        <script type="text/javascript" src="/js/WoldBuilderTabLoader.js"></script>
+        <script type="text/javascript" src="/js/CardTabFiller.js"></script>
         <script type="text/javascript" src="/js/SearchBox.js"></script>
         <script>
             let getOwnedRegionSetsEndpoint = '/WorldBuilder/WorldApi/GetOwnedRegionSets';
@@ -64,6 +64,7 @@
                 }
             }
             let fetchCards = (searchTerm = null) => {
+                console.log('fetching cards, search term: ' + (searchTerm ? searchTerm : '<none>'));
                 let queryString = (searchTerm && searchTerm.length > 0) ? '?searchTerm=' + searchTerm : '';
                 $.get(getOwnedRegionSetsEndpoint + queryString).done((data) => bindData(data, '#owned', '#owned-count', '#owned .empty-tab'));
                 $.get(getSharedRegionSetsEndpoint + queryString).done((data) => bindData(data, '#shared', '#shared-count', '#shared .empty-tab'));
@@ -71,5 +72,6 @@
             };
 
             let searchBox = new SearchBox('#search', 1000, fetchCards);
+            fetchCards();
         </script>
     }

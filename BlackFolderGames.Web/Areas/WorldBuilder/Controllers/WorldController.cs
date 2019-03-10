@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BlackFolderGames.Application;
+using BlackFolderGames.Application.Interfaces;
 using BlackFolderGames.Web.Areas.WorldBuilder.Models;
 using BlackFolderGames.Web.Models;
 using Microsoft.AspNetCore.Authorization;

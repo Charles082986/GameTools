@@ -15,6 +15,8 @@ using Microsoft.Extensions.DependencyInjection;
 using WorldBuilder.Data;
 using BlackFolderGames.Application;
 using Neo4jClient;
+using BlackFolderGames.Application.Interfaces;
+using BlackFolderGames.Application.Factories;
 
 namespace BlackFolderGames.Web
 {
@@ -98,10 +100,12 @@ namespace BlackFolderGames.Web
                     , Configuration["BlackFolderGames:WorldBuilder:User"]
                     , Configuration["BlackFolderGames:WorldBuilder:Password"]));
             services.AddSingleton<IGraphClientFactory, GraphClientFactory>();
+            services.AddSingleton<IImageServiceFactory, ImageServiceFactory>();
 
-            services.AddTransient<IUserRepository, UserRepository>();
-            services.AddTransient<IWorldBuilderRepository, WorldBuilderRepository>();
-            services.AddTransient<IWorldService, WorldService>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IWorldBuilderRepository, WorldBuilderRepository>();
+            services.AddScoped<IWorldService, WorldService>();
+            
             
         }
 
